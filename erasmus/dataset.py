@@ -1,4 +1,4 @@
-"""Create, append to, and modify dataset CSVs."""
+"""Create, modify, and parse dataset CSVs."""
 
 import argparse
 import csv
