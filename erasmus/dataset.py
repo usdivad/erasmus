@@ -36,12 +36,11 @@ def add_to_dataset(dataset_path, source_path, source_label, reinitialize):
         writer = csv.DictWriter(f, CSV_FIELDNAMES)
         audio_files = []
         for root, dirs, files in os.walk(source_path):
-            files = [filename for filename in files
-                     if os.path.splitext(filename)[1] in valid_extensions]
-            audio_files.extend(files)
+            filepaths = [os.path.join(root, filename) for filename in files
+                         if os.path.splitext(filename)[1] in valid_extensions]
+            audio_files.extend(filepaths)
 
-        for i, filename in enumerate(audio_files):
-            filepath = os.path.join(root, filename)
+        for i, filepath in enumerate(audio_files):
             print("{}. {}".format(i, filepath))
             row = {"idx": data_idx + i,
                    "path": filepath,
@@ -52,6 +51,12 @@ def add_to_dataset(dataset_path, source_path, source_label, reinitialize):
 
 def initialize_dataset(dataset_path):
     """Initialize (or re-initialize) a dataset with field names as header."""
+    if not os.path.exists(os.path.dirname(dataset_path)):
+        try:
+            os.makedirs(os.path.dirname(dataset_path))
+        except OSError as e:
+            print("OSError while creating dir tree! {}".format(e.strerror))
+
     with open(dataset_path, "w") as f:
         writer = csv.writer(f)
         writer.writerow(CSV_FIELDNAMES)
