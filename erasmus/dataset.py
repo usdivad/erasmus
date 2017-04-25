@@ -13,7 +13,7 @@ def add_to_dataset(dataset_path, source_path, source_label, reinitialize):
     """Add source files to dataset."""
     # Setup
     valid_extensions = [".mp3", ".wav", ".m4a", ".flac"]
-    start_idx = 0
+    data_idx = 0
     label_idx = 0
 
     # Initialize or re-initialize CSV
@@ -27,24 +27,27 @@ def add_to_dataset(dataset_path, source_path, source_label, reinitialize):
         rows = [row for row in reader]
         print("{} rows".format(len(rows)))
         print(rows)
-        start_idx = sum(1 for row in rows)
+        data_idx = sum(1 for row in rows)
         label_idx = sum(1 for row in rows if row["label"] == source_label)
-    print("start_idx={}, label_idx={}".format(start_idx, label_idx))
+    print("data_idx={}, label_idx={}".format(data_idx, label_idx))
 
     # Add source files to dataset
     with open(dataset_path, "a") as f:
         writer = csv.DictWriter(f, CSV_FIELDNAMES)
+        audio_files = []
         for root, dirs, files in os.walk(source_path):
             files = [filename for filename in files
                      if os.path.splitext(filename)[1] in valid_extensions]
-            for i, filename in enumerate(files):
-                filepath = os.path.join(root, filename)
-                print(filepath)
-                row = {"idx": start_idx + i,
-                       "path": filepath,
-                       "label": source_label,
-                       "label_idx": label_idx + i}
-                writer.writerow(row)
+            audio_files.extend(files)
+
+        for i, filename in enumerate(audio_files):
+            filepath = os.path.join(root, filename)
+            print("{}. {}".format(i, filepath))
+            row = {"idx": data_idx + i,
+                   "path": filepath,
+                   "label": source_label,
+                   "label_idx": label_idx + i}
+            writer.writerow(row)
 
 
 def initialize_dataset(dataset_path):
@@ -62,7 +65,8 @@ if __name__ == "__main__":
                         help="Path to source directory containing audio files")
     parser.add_argument("source_label", type=str,
                         help="Label to apply to data in the source directory")
-    parser.add_argument("-reinitialize", action="store_true")
+    parser.add_argument("-reinitialize", action="store_true",
+                        help="Flag for whether or not to reinitialize dataset")
     args = parser.parse_args()
 
     # Add to dataset
