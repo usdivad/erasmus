@@ -1,0 +1,5 @@
+# Packages
+librosa==0.5.0
+matplotlib==2.0.0
+
+# Secondary dependencies (TODO)
