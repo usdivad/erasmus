@@ -7,6 +7,15 @@ import os
 CSV_FIELDNAMES = ["idx", "path", "label", "label_idx"]
 
 
+def get_dataset_rows(dataset_path):
+    """Return all rows (as a list of dicts) for an existing dataset."""
+    rows = []
+    with open(dataset_path, "r") as f:
+        reader = csv.DictReader(f)
+        rows = [row for row in reader]
+    return rows
+
+
 def add_to_dataset(dataset_path, source_path, source_label, reinitialize):
     """Add source files to dataset."""
     # Setup

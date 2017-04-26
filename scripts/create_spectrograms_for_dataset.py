@@ -1,7 +1,13 @@
-"""Create spectograms for all files in a dataset."""
+r"""Create spectrograms for all files in a dataset.
+
+Example usage:
+    `python create_spectrograms_for_dataset.py \
+     data/experiments/dataset.csv \
+     data/experiments/spectrograms`
+
+"""
 
 import argparse
-import csv
 import os
 import sys
 
@@ -11,10 +17,7 @@ import erasmus.spectrogram
 
 def create_spectrograms_for_dataset(dataset_path, spectrograms_path):
     """Create spectrograms for all files in a dataset."""
-    rows = []
-    with open(dataset_path, "r") as f:
-        reader = csv.DictReader(f)
-        rows = [row for row in reader]
+    rows = erasmus.dataset.get_dataset_rows(dataset_path)
 
     for i, row in enumerate(rows):
         # Construct output path
@@ -31,7 +34,7 @@ def create_spectrograms_for_dataset(dataset_path, spectrograms_path):
                 os.makedirs(os.path.dirname(out_path))
             except OSError as e:
                 print("OSError while creating dir tree! {}".format(e.strerror))
-        erasmus.spectogram.create_spectrogram_for_audio(row["path"], out_path)
+        erasmus.spectrogram.create_spectrogram_for_audio(row["path"], out_path)
 
 if __name__ == "__main__":
     # Parse arguments
