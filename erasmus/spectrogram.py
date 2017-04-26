@@ -14,7 +14,6 @@ import numpy as np
 
 DEFAULT_DURATION = 60
 DEFAULT_METHOD = "stft"  # stft, cqt, mel
-DEFAULT_DATA_CATEGORY = "train"  # train, valid, test
 
 
 def create_spectrogram_for_audio(in_path, out_path,
