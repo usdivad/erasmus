@@ -5,4 +5,7 @@ data
 include
 lib
 pip-selfcheck.json
+
 *.pyc
+
+erasmus.egg-info
