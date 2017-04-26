@@ -1,9 +1,7 @@
 """Create, modify, and parse dataset CSVs."""
 
-import argparse
 import csv
 import os
-import sys
 
 
 CSV_FIELDNAMES = ["idx", "path", "label", "label_idx"]
@@ -60,22 +58,3 @@ def initialize_dataset(dataset_path):
     with open(dataset_path, "w") as f:
         writer = csv.writer(f)
         writer.writerow(CSV_FIELDNAMES)
-
-
-if __name__ == "__main__":
-    # Parse arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("dataset_path", type=str, help="Path to dataset CSV")
-    parser.add_argument("source_path", type=str,
-                        help="Path to source directory containing audio files")
-    parser.add_argument("source_label", type=str,
-                        help="Label to apply to data in the source directory")
-    parser.add_argument("-reinitialize", action="store_true",
-                        help="Flag for whether or not to reinitialize dataset")
-    args = parser.parse_args()
-
-    # Add to dataset
-    success = add_to_dataset(args.dataset_path, args.source_path,
-                             args.source_label, args.reinitialize)
-
-    sys.exit(0 if success else 1)
