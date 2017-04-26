@@ -83,14 +83,17 @@ def create_spectrogram_for_audio(in_path, out_path,
     print("Computed spectrogram using method {}".format(method))
 
     # Plot spectrogram image only (no axes/legend/whitespace)
-    plt.figure(figsize=(10, 4))
+    fig = plt.figure(figsize=(10, 4))
     librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max))
-    plt.tight_layout(pad=0)
+    fig.tight_layout(pad=0)
     # plt.show()
 
     # Save spectrogram to file
-    plt.savefig(out_path)
+    fig.savefig(out_path)
     print("Saved spectrogram to {}".format(out_path))
+
+    # Close figure to release memory
+    plt.close(fig)
 
 
 def get_spectrogram_experiment():
