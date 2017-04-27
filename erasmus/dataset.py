@@ -15,7 +15,12 @@ SPLIT_RATIOS = {
 
 
 def split_dataset(dataset_path, spectrograms_path=None):
-    """Split dataset into training, validation, and test sets."""
+    """Split dataset into training, validation, and test sets.
+
+    This assumes that the dataset has paths to spectrograms (to do this,
+    run create_spectrograms_for_dataset() and set add_spectrograms_to_dataset
+    to True)
+    """
     # rows = read_dataset_rows(dataset_path)
     pass
 
@@ -37,14 +42,16 @@ def create_spectrograms_for_dataset(dataset_path, spectrograms_path,
         # Create spectrogram
         if os.path.isfile(out_path):
             print("Spectrogram already exists @ {}; skipping".format(out_path))
-            continue
-        if not os.path.exists(os.path.dirname(out_path)):
-            try:
-                os.makedirs(os.path.dirname(out_path))
-            except OSError as e:
-                print("OSError while creating dir tree! {}".format(e.strerror))
-        erasmus.spectrogram.create_spectrogram_for_audio(row["audio_path"],
-                                                         out_path)
+        else:
+            if not os.path.exists(os.path.dirname(out_path)):
+                try:
+                    os.makedirs(os.path.dirname(out_path))
+                except OSError as e:
+                    msg = e.strerror
+                    print("OSError while creating dir tree! {}".format(msg))
+                    continue
+            erasmus.spectrogram.create_spectrogram_for_audio(row["audio_path"],
+                                                             out_path)
 
         # Add spectrogram path to dataset
         if add_spectrograms_to_dataset:
@@ -59,6 +66,7 @@ def write_dataset_rows(dataset_path, rows, fieldnames=CSV_FIELDNAMES):
     """Write rows to dataset CSV."""
     with open(dataset_path, "w") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
         writer.writerows(rows)
 
 
