@@ -1,7 +1,11 @@
 """Create, modify, and parse dataset CSVs."""
 
 import csv
+import datetime
+import json
 import os
+import random
+import shutil
 
 import erasmus.spectrogram
 
@@ -14,15 +18,126 @@ SPLIT_RATIOS = {
 }
 
 
-def split_dataset(dataset_path, spectrograms_path=None):
+def split_dataset(in_dataset_path, out_dataset_path,
+                  spectrograms_path=None,
+                  labels=None,
+                  split_ratios=SPLIT_RATIOS):
     """Split dataset into training, validation, and test sets.
 
     This assumes that the dataset has paths to spectrograms (to do this,
     run create_spectrograms_for_dataset() and set add_spectrograms_to_dataset
-    to True)
+    to True).
+
+    Creates a new dataset at `out_dataset_path`.
     """
-    # rows = read_dataset_rows(dataset_path)
-    pass
+    # Read rows from dataset
+    rows = read_dataset_rows(in_dataset_path)
+
+    # Shuffle the rows
+    random.shuffle(rows)
+
+    # Get labels from dataset (if not passed in explicitly)
+    if not labels:
+        labels = {label for label in [row["label"] for row in rows]}
+        labels = list(labels)
+
+    # Split dataset into separate lists by label
+    rows_by_label = {}
+    for label in labels:
+        rows_by_label[label] = [row for row in rows if row["label"] == label]
+
+    # Use split ratios to divide the shuffled lists
+    dataset_split = {
+        "train": {},
+        "valid": {},
+        "test": []
+    }
+    for label, rows_for_label, in rows_by_label.items():
+        num_rows = len(rows_for_label)
+        train_idx = int(num_rows * split_ratios["train"])
+        valid_idx = train_idx + int(num_rows * split_ratios["valid"])
+        test_idx = valid_idx + int(num_rows * split_ratios["test"])
+
+        print("train={},valid={},test={}. "
+              "num_rows={}".format(train_idx, valid_idx, test_idx,
+                                   num_rows))
+
+        dataset_split["train"][label] = rows_for_label[0:train_idx]
+        dataset_split["valid"][label] = rows_for_label[train_idx:valid_idx]
+        dataset_split["test"].extend(rows_for_label[valid_idx:max(test_idx,
+                                                                  num_rows)])
+    # Write dataset in JSON format
+    json_path = os.path.join(out_dataset_path, "dataset.json")
+    if not os.path.exists(os.path.dirname(json_path)):
+        os.makedirs(os.path.dirname(json_path))
+    with open(json_path, "w") as f:
+        f.write(json.dumps(dataset_split))
+
+    # Copy files into corresponding train, valid, test directories
+    # while keeping label directory category structure
+    for data_category, data in dataset_split.items():
+        if data_category == "test":
+            # Handle test (indexing works differently)
+            rows_test = data
+            for i, row in enumerate(rows_test):
+                row["data_category"] = data_category
+                row["test_idx"] = i
+
+                src_path = row["spectrogram_path"]
+                dst_path = os.path.join(out_dataset_path,
+                                        data_category,
+                                        "{}.png".format(i))
+
+                if not os.path.exists(os.path.dirname(dst_path)):
+                    os.makedirs(os.path.dirname(dst_path))
+
+                shutil.copyfile(src_path, dst_path)
+                print("Copied {} to {}".format(src_path, dst_path))
+        else:
+            # Handle training and validation
+            for label, rows_for_label in data.items():
+                for i, row in enumerate(rows_for_label):
+                    print("Row {}-{}-{}: {}".format(data_category, label, i,
+                                                    row))
+                    row["data_category"] = data_category
+
+                    src_path = row["spectrogram_path"]
+                    dst_path = os.path.join(out_dataset_path,
+                                            data_category,
+                                            label,
+                                            os.path.basename(src_path))
+
+                    if not os.path.exists(os.path.dirname(dst_path)):
+                        os.makedirs(os.path.dirname(dst_path))
+
+                    shutil.copyfile(src_path, dst_path)
+                    print("Copied {} to {}".format(src_path, dst_path))
+
+    # Add description
+    dataset_split["description"] = {
+        "in_dataset_path": in_dataset_path,
+        "out_dataset_path": out_dataset_path,
+        "labels": labels,
+        "split_ratios": split_ratios,
+        "num_rows": len(rows),
+        "created_at": str(datetime.datetime.now())
+    }
+
+    # Write dataset in JSON format
+    json_path = os.path.join(out_dataset_path, "dataset.json")
+    if not os.path.exists(os.path.dirname(json_path)):
+        os.makedirs(os.path.dirname(json_path))
+    with open(json_path, "w") as f:
+        f.write(json.dumps(dataset_split))
+
+    # Write dataset into multiple CSVs (TODO)
+    # trainandvalid_path = os.path.join(out_dataset_path,
+    #                                   "dataset_trainandvalid.csv")
+    # test_path = os.path.join(out_dataset_path, "dataset_test.csv")
+    # with open(trainandvalid_path, "w") as f:
+    #     writer = csv.DictWriter(CSV_FIELDNAMES)
+
+    print("Done splitting; new dataset at {}".format(out_dataset_path))
 
 
 def create_spectrograms_for_dataset(dataset_path, spectrograms_path,
