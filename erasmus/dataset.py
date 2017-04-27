@@ -3,11 +3,66 @@
 import csv
 import os
 
+import erasmus.spectrogram
 
-CSV_FIELDNAMES = ["idx", "path", "label", "label_idx"]
+CSV_FIELDNAMES = ["idx", "label", "label_idx",
+                  "audio_path", "spectrogram_path"]
+SPLIT_RATIOS = {
+    "train": 0.6,
+    "valid": 0.2,
+    "test": 0.2
+}
 
 
-def get_dataset_rows(dataset_path):
+def split_dataset(dataset_path, spectrograms_path=None):
+    """Split dataset into training, validation, and test sets."""
+    # rows = read_dataset_rows(dataset_path)
+    pass
+
+
+def create_spectrograms_for_dataset(dataset_path, spectrograms_path,
+                                    add_spectrograms_to_dataset=True):
+    """Create spectrograms for all files in a dataset.
+
+    Optionally, add spectrogram paths to dataset.
+    """
+    rows = read_dataset_rows(dataset_path)
+
+    for i, row in enumerate(rows):
+        # Construct output path
+        out_filename = "{}.{}.png".format(row["label"], row["label_idx"])
+        out_path = os.path.join(spectrograms_path, row["label"], out_filename)
+        print("Output path: {}".format(out_path))
+
+        # Create spectrogram
+        if os.path.isfile(out_path):
+            print("Spectrogram already exists @ {}; skipping".format(out_path))
+            continue
+        if not os.path.exists(os.path.dirname(out_path)):
+            try:
+                os.makedirs(os.path.dirname(out_path))
+            except OSError as e:
+                print("OSError while creating dir tree! {}".format(e.strerror))
+        erasmus.spectrogram.create_spectrogram_for_audio(row["audio_path"],
+                                                         out_path)
+
+        # Add spectrogram path to dataset
+        if add_spectrograms_to_dataset:
+            row["spectrogram_path"] = out_path
+
+    # Update dataset CSV if necessary
+    if add_spectrograms_to_dataset:
+        write_dataset_rows(dataset_path, rows)
+
+
+def write_dataset_rows(dataset_path, rows, fieldnames=CSV_FIELDNAMES):
+    """Write rows to dataset CSV."""
+    with open(dataset_path, "w") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writerows(rows)
+
+
+def read_dataset_rows(dataset_path):
     """Return all rows (as a list of dicts) for an existing dataset."""
     rows = []
     with open(dataset_path, "r") as f:
@@ -50,7 +105,7 @@ def add_to_dataset(dataset_path, source_path, source_label, reinitialize):
         for i, filepath in enumerate(audio_files):
             print("{}. {}".format(i, filepath))
             row = {"idx": data_idx + i,
-                   "path": filepath,
+                   "audio_path": filepath,
                    "label": source_label,
                    "label_idx": label_idx + i}
             writer.writerow(row)
