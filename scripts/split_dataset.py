@@ -20,8 +20,16 @@ if __name__ == "__main__":
                         help="Path to input dataset CSV")
     parser.add_argument("out_dataset_path", type=str,
                         help="Path to write new dataset to (with files)")
+    parser.add_argument("-labels", nargs="+", required=False,
+                        help="Custom list of labels")
     args = parser.parse_args()
 
-    erasmus.dataset.split_dataset(args.in_dataset_path, args.out_dataset_path)
+    if args.labels is not None:
+        erasmus.dataset.split_dataset(args.in_dataset_path,
+                                      args.out_dataset_path,
+                                      labels=args.labels)
+    else:
+        erasmus.dataset.split_dataset(args.in_dataset_path,
+                                      args.out_dataset_path)
 
     sys.exit(0)
