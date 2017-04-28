@@ -100,11 +100,20 @@ def split_dataset(in_dataset_path, out_dataset_path,
                     print("Row {}-{}-{}: {}".format(data_category, label, i,
                                                     row))
                     row["data_category"] = data_category
+                    new_label = label
+
+                    # # Trying out grouping labels
+                    # # TODO: Parameterize this by passing in label dicts
+                    # #       (e.g. {"1980s_to_1990s": ["1980s", "1990s"]})
+                    # if label in ["1940s", "1950s", "1960s"]:
+                    #     new_label = "1940s_to_1960s"
+                    # else:
+                    #     new_label = "1970s_to_2000s"
 
                     src_path = row["spectrogram_path"]
                     dst_path = os.path.join(out_dataset_path,
                                             data_category,
-                                            label,
+                                            new_label,
                                             os.path.basename(src_path))
 
                     if not os.path.exists(os.path.dirname(dst_path)):
