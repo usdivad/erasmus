@@ -7,5 +7,6 @@ lib
 pip-selfcheck.json
 
 *.pyc
+nbs/.ipynb_checkpoints/*
 
 erasmus.egg-info
